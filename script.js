@@ -12,24 +12,55 @@ const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric
 document.getElementById('date-display').innerText = new Date().toLocaleDateString('id-ID', options);
 
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('active');
-    document.getElementById('sidebar-overlay').classList.toggle('active');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('active');
+    document.getElementById('sidebar-overlay').classList.remove('active');
 }
 // Navigasi Menu
+// Navigasi Menu Dashboard
 function switchMenu(menuId, element) {
-    document.querySelectorAll('.menu-section').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+    const targetSection = document.getElementById('menu-' + menuId);
     
-    document.getElementById('menu-' + menuId).classList.add('active');
-    if (element) element.classList.add('active');
-    
-    const titles = { 'dashboard': 'Dashboard Utama', 'manajemen': 'Manajemen Anak', 'log': 'Log Aktivitas' };
-    document.getElementById('page-title').innerText = titles[menuId];
+    if (!targetSection) {
+        console.error("Section menu-" + menuId + " tidak ditemukan!");
+        return;
+    }
 
-    // Otomatis tutup sidebar di Mobile setelah mengklik menu
+    // 1. Sembunyikan semua section
+    document.querySelectorAll('.menu-section').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // 2. Hapus status aktif di semua link sidebar
+    document.querySelectorAll('.nav-links li').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // 3. Tampilkan section yang dituju
+    targetSection.classList.add('active');
+    
+    // 4. Tandai menu sidebar sebagai aktif
+    if (element) {
+        element.classList.add('active');
+    }
+
+    // 5. Update Judul Halaman
+    const titles = { 
+        'dashboard': 'Dashboard Utama', 
+        'manajemen': 'Manajemen Anak', 
+        'log': 'Log Aktivitas' 
+    };
+    document.getElementById('page-title').innerText = titles[menuId] || 'Dashboard';
+
+    // 6. Tutup sidebar jika di mobile
     if (window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.remove('active');
-        document.getElementById('sidebar-overlay').classList.remove('active');
+        closeSidebar();
     }
 }
 // Format Rupiah (Hasil Akhir)
@@ -151,19 +182,84 @@ function renderRekapTable() {
     }
 
     filtered.forEach(rekap => {
+        // Cari seluruh riwayat anak ini di logDataGlobal
+        let childLogs = logDataGlobal.filter(log => log.nama === rekap.nama);
+
         let historyHtml = rekap.history.map(h => {
             let cls = h.jenis === 'Masuk' ? 'badge-in' : 'badge-out';
             let icon = h.jenis === 'Masuk' ? '<i class="fa-solid fa-arrow-down"></i>' : '<i class="fa-solid fa-arrow-up"></i>';
             return `<span class="history-badge ${cls}">${icon} ${formatRp(h.nominal)}</span>`;
         }).join('');
 
+        // Tampilkan tombol "Lihat Semua" hanya jika transaksi lebih dari 3
+        let btnMore = '';
+        if (childLogs.length > 3) {
+            btnMore = `<button class="btn-more-sm" onclick="showDetailHistory('${rekap.nama}')"><i class="fa-solid fa-list"></i> Lihat Semua (${childLogs.length})</button>`;
+        }
+
         tbody.innerHTML += `
             <tr>
                 <td><strong>${rekap.nama}</strong></td>
                 <td class="saldo-text">${formatRp(rekap.saldo)}</td>
-                <td>${historyHtml || '<span class="text-muted">Belum ada transaksi</span>'}</td>
+                <td>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">
+                        <div>${historyHtml || '<span class="text-muted">Belum ada transaksi</span>'}</div>
+                        ${btnMore}
+                    </div>
+                </td>
             </tr>
         `;
+    });
+}
+
+// Fungsi Baru: Memunculkan Pop-up Seluruh Riwayat per Anak Binaan
+function showDetailHistory(nama) {
+    // Ambil data spesifik milik anak yang di-klik
+    let childLogs = logDataGlobal.filter(log => log.nama === nama);
+    
+    // Buat baris tabel dari data log
+    let tableRows = childLogs.map((log, index) => {
+        let badgeCls = log.jenis === 'Masuk' ? 'badge-in' : 'badge-out';
+        let sign = log.jenis === 'Masuk' ? '+' : '-';
+        let color = log.jenis === 'Masuk' ? '#166534' : '#991b1b';
+        return `
+            <tr>
+                <td style="text-align:center; padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;">${index + 1}</td>
+                <td style="text-align:left; padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; color: #64748b;">${log.waktu}</td>
+                <td style="text-align:center; padding: 10px; border-bottom: 1px solid #f1f5f9;"><span class="history-badge ${badgeCls}">${log.jenis}</span></td>
+                <td style="text-align:right; padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: ${color};">${sign} ${formatRp(log.nominal)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    // Rangkai menjadi struktur tabel utuh dengan fitur sticky header
+    let htmlContent = `
+        <div style="max-height: 350px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
+                    <tr>
+                        <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; font-size: 0.8rem; color: #475569;">No</th>
+                        <th style="text-align:left; padding: 10px; border-bottom: 2px solid #cbd5e1; font-size: 0.8rem; color: #475569;">Waktu</th>
+                        <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; font-size: 0.8rem; color: #475569;">Jenis</th>
+                        <th style="text-align:right; padding: 10px; border-bottom: 2px solid #cbd5e1; font-size: 0.8rem; color: #475569;">Nominal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Munculkan menggunakan SweetAlert2
+    Swal.fire({
+        title: `Riwayat Transaksi`,
+        html: `<p style="font-size: 0.9rem; margin-bottom: 15px; font-weight: 600;">Data Anak Binaan: <span style="color:#3b82f6;">${nama}</span></p> ${htmlContent}`,
+        width: '600px',
+        showCloseButton: true,
+        confirmButtonText: 'Tutup',
+        confirmButtonColor: '#3b82f6',
+        padding: '20px'
     });
 }
 
