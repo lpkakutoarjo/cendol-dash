@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CENDOL LPKA Kutoarjo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon"><i class="fa-solid fa-wallet"></i></div>
+            <h2>CENDOL Admin</h2>
+            <p>LPKA Kelas I Kutoarjo</p>
+        </div>
+        <ul class="nav-links">
+            <li class="active" onclick="switchMenu('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard Utama</li>
+            <li onclick="switchMenu('manajemen', this)"><i class="fa-solid fa-users-gear"></i> Manajemen Anak</li>
+            <li onclick="switchMenu('log', this)"><i class="fa-solid fa-clock-rotate-left"></i> Log Aktivitas</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <div class="header-left">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <div>
+                    <h1 id="page-title">Dashboard Utama</h1>
+                    <p class="subtitle" id="date-display"></p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div id="status-koneksi" class="status"><i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan...</div>
+                <div class="header-user">
+                    <div class="avatar"><i class="fa-solid fa-user-shield"></i></div>
+                    <span class="user-name">Administrator</span>
+                </div>
+            </div>
+        </header>
+
+        <section id="menu-dashboard" class="menu-section active">
+            <div class="summary-cards">
+                <div class="card bg-gradient-blue">
+                    <div class="card-info">
+                        <h3>Total Saldo Keseluruhan</h3>
+                        <p class="amount" id="total-saldo-all">Rp 0</p>
+                    </div>
+                    <div class="card-icon"><i class="fa-solid fa-vault"></i></div>
+                </div>
+                <div class="card bg-gradient-green">
+                    <div class="card-info">
+                        <h3>Transaksi Masuk (Hari Ini)</h3>
+                        <p class="amount" id="total-trx-in">Rp 0</p>
+                    </div>
+                    <div class="card-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                </div>
+                <div class="card bg-gradient-red">
+                    <div class="card-info">
+                        <h3>Transaksi Keluar (Hari Ini)</h3>
+                        <p class="amount" id="total-trx-out">Rp 0</p>
+                    </div>
+                    <div class="card-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                </div>
+                <div class="card bg-gradient-orange">
+                    <div class="card-info">
+                        <h3>Total Anak Binaan</h3>
+                        <p class="amount" id="total-anak">0 Orang</p>
+                    </div>
+                    <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+                </div>
+            </div>
+
+            <div class="grid-layout">
+                <div class="form-container form-glass">
+                    <div class="section-title">
+                        <h3><i class="fa-solid fa-wallet"></i> Input Transaksi Baru</h3>
+                        <p class="text-muted" style="font-size: 0.8rem;">Catat perubahan saldo anak binaan</p>
+                    </div>
+                    <form id="form-transaksi" onsubmit="submitTransaksi(event)">
+                        <div class="input-modern">
+                            <i class="fa-solid fa-user-check icon-left"></i>
+                            <input list="list-anak" id="trx-nama" placeholder="Pilih atau ketik nama anak..." required autocomplete="off">
+                            <datalist id="list-anak"></datalist>
+                        </div>
+
+                        <div class="radio-cards mt-3">
+                            <label class="radio-card masuk">
+                                <input type="radio" name="trx-jenis" value="Masuk" required>
+                                <div class="card-content">
+                                    <i class="fa-solid fa-circle-down"></i>
+                                    <span>Uang Masuk</span>
+                                </div>
+                            </label>
+                            <label class="radio-card keluar">
+                                <input type="radio" name="trx-jenis" value="Keluar">
+                                <div class="card-content">
+                                    <i class="fa-solid fa-circle-up"></i>
+                                    <span>Uang Keluar</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="input-modern mt-3">
+                            <span class="currency-prefix">Rp</span>
+                            <input type="text" id="trx-nominal" placeholder="Contoh: 50.000" required autocomplete="off">
+                        </div>
+
+                        <button type="submit" class="btn-submit btn-glow mt-4" id="btn-submit-trx">
+                            <i class="fa-solid fa-paper-plane"></i> Proses Transaksi
+                        </button>
+                    </form>
+                </div>
+
+                <div class="chart-container">
+                    <div class="section-title">
+                        <h3><i class="fa-solid fa-chart-column"></i> Aktivitas 7 Hari Terakhir</h3>
+                    </div>
+                    <div class="chart-wrapper" style="position: relative; height: 280px; width: 100%;">
+                        <canvas id="trxChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container mt-4">
+                <div class="table-header">
+                    <h3><i class="fa-solid fa-address-book"></i> Rekap Saldo & Riwayat</h3>
+                    <div class="table-controls">
+                        <select id="rekap-limit" onchange="renderRekapTable()">
+                            <option value="10">10 Baris</option>
+                            <option value="25">25 Baris</option>
+                            <option value="50">50 Baris</option>
+                            <option value="all">Semua Data</option>
+                        </select>
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="rekap-search" placeholder="Cari nama anak..." onkeyup="renderRekapTable()">
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">Nama Anak Binaan</th>
+                                <th width="25%">Saldo Aktif</th>
+                                <th width="45%">3 Transaksi Terakhir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-rekap">
+                            <tr><td colspan="3" class="text-center text-muted">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="menu-manajemen" class="menu-section">
+            <div class="grid-layout-small">
+                <div class="form-container">
+                    <div class="section-title">
+                        <h3><i class="fa-solid fa-user-plus"></i> Tambah Data Anak</h3>
+                    </div>
+                    <form id="form-anak" onsubmit="submitAnak(event)">
+                        <div class="input-group">
+                            <label>Nama Lengkap Anak</label>
+                            <input type="text" id="anak-nama" placeholder="Masukkan nama lengkap..." required autocomplete="off" class="input-standard">
+                        </div>
+                        <button type="submit" class="btn-submit btn-primary mt-3"><i class="fa-solid fa-save"></i> Simpan Data</button>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3><i class="fa-solid fa-users"></i> Daftar Anak Binaan</h3>
+                        <div class="table-controls">
+                            <select id="anak-limit" onchange="renderAnakTable()">
+                                <option value="10">10 Baris</option>
+                                <option value="25">25 Baris</option>
+                                <option value="50">50 Baris</option>
+                                <option value="all">Semua Data</option>
+                            </select>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="anak-search" placeholder="Cari nama anak..." onkeyup="renderAnakTable()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th width="10%">No</th>
+                                    <th>Nama Lengkap</th>
+                                    <th width="20%" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-anak">
+                                <tr><td colspan="3" class="text-center text-muted">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="menu-log" class="menu-section">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3><i class="fa-solid fa-list-check"></i> Riwayat Seluruh Transaksi</h3>
+                    <div class="table-controls">
+                        <select id="log-limit" onchange="renderLogTable()">
+                            <option value="10">10 Baris</option>
+                            <option value="20">20 Baris</option>
+                            <option value="30">30 Baris</option>
+                            <option value="50">50 Baris</option>
+                            <option value="all">Semua Data</option>
+                        </select>
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="log-search" placeholder="Cari aktivitas..." onkeyup="renderLogTable()">
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table log-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu & Tanggal</th>
+                                <th>Nama Anak</th>
+                                <th>Jenis</th>
+                                <th>Nominal</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-log">
+                            <tr><td colspan="5" class="text-center text-muted">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
