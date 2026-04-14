@@ -23,7 +23,15 @@ h1, h2, h3 { color: var(--primary); font-weight: 600; }
 .text-muted { color: var(--text-muted); font-size: 0.9rem; }
 
 /* Sidebar */
-.sidebar { width: 280px; background: var(--card-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; }
+.sidebar { 
+    width: 280px; 
+    background: var(--card-bg); 
+    border-right: 1px solid var(--border); 
+    display: flex; 
+    flex-direction: column; 
+    z-index: 1000; /* Ditingkatkan agar di atas overlay */
+    transition: all 0.3s ease;
+}
 .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid var(--border); }
 .logo-icon { font-size: 2.5rem; color: var(--secondary); margin-bottom: 10px; }
 .sidebar-header p { font-size: 0.8rem; color: var(--text-muted); }
@@ -46,8 +54,16 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .avatar { background: var(--accent); color: var(--secondary); width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
 
 /* Layouts */
-.menu-section { display: none; animation: fadeIn 0.4s ease; }
-.menu-section.active { display: block; }
+.menu-section {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.menu-section.active {
+    display: block !important;
+    opacity: 1;
+}
 .grid-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
 .grid-layout-small { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
 
@@ -307,10 +323,22 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
     transition: 0.3s;
 }
 .sidebar-overlay { 
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; 
-    background: rgba(0,0,0,0.5); z-index: 99; opacity: 0; transition: 0.3s ease-in-out; 
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100vh; 
+    background: rgba(0,0,0,0.6); /* Sedikit lebih gelap agar kontras */
+    z-index: 999; /* Di bawah sidebar (1000), di atas konten utama */
+    opacity: 0; 
+    transition: opacity 0.3s ease; 
 }
-.sidebar-overlay.active { display: block; opacity: 1; }
+
+.sidebar-overlay.active { 
+    display: block; 
+    opacity: 1; 
+}
 
 .header-left { display: flex; align-items: center; gap: 15px; }
 .header-right { display: flex; align-items: center; gap: 15px; }
@@ -323,10 +351,11 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
     /* Ubah Sidebar Menjadi Off-Canvas (Tersembunyi di Kiri) */
     .sidebar {
         position: fixed;
-        left: -300px;
+        left: -280px; /* Disesuaikan agar pas tertutup */
         top: 0;
         height: 100vh;
-        width: 270px;
+        width: 280px;
+        z-index: 1000; /* INI YANG PALING PENTING: Agar menu ada di atas layar hitam */
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 4px 0 15px rgba(0,0,0,0.1);
     }
@@ -360,4 +389,23 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
         border: 1px solid var(--border);
         border-radius: 8px;
     }
+}
+/* --- Tombol Lihat Semua Riwayat (Tabel Rekap) --- */
+.btn-more-sm {
+    background: #f8fafc;
+    color: var(--secondary);
+    border: 1px solid #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 5px;
+    display: inline-block;
+}
+.btn-more-sm:hover {
+    background: var(--accent);
+    border-color: var(--secondary);
+    transform: translateY(-1px);
 }
