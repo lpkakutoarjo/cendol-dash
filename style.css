@@ -144,11 +144,11 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
 .mt-3 { margin-top: 15px; }
 .mt-4 { margin-top: 25px; }
 
-/* Input Field Modern */
+/* --- Modern Form Styles --- */
 .input-modern {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: stretch; /* Memastikan background "Rp" dan input memiliki tinggi yang sama persis */
     background: #ffffff;
     border: 2px solid #e2e8f0;
     border-radius: 12px;
@@ -162,20 +162,30 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
 }
 
 .input-modern .icon-left {
+    display: flex;
+    align-items: center;
     padding: 0 15px;
     color: #94a3b8;
     font-size: 1.1rem;
 }
 
+/* Penyesuaian khusus untuk kolom "Rp" */
 .input-modern .currency-prefix {
+    display: flex;
+    align-items: center;      /* Membuat teks Rp presisi di tengah secara vertikal */
+    justify-content: center;  /* Membuat teks Rp presisi di tengah secara horizontal */
     background: #f1f5f9;
-    padding: 14px 18px;
+    padding: 0 18px;          
     font-weight: 600;
-    color: var(--text-muted);
+    color: #475569;
     border-right: 2px solid #e2e8f0;
+    font-size: 1rem;
+    min-width: 55px;          /* Memberikan batas minimal lebar */
+    flex-shrink: 0;           /* MENCEGAH kotak "Rp" menyusut atau gepeng di layar HP */
 }
 
 .input-modern input {
+    flex: 1;                  /* Memastikan input mengambil seluruh sisa lebar form */
     width: 100%;
     padding: 14px 15px;
     border: none;
@@ -183,6 +193,7 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
     outline: none;
     font-size: 1rem;
     font-weight: 500;
+    color: var(--text-main);
 }
 
 /* Radio Cards (Pengganti Radio Button Biasa) */
