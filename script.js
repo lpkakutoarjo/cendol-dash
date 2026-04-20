@@ -1,5 +1,5 @@
 // GANTI DENGAN URL DEPLOYMENT GOOGLE APPS SCRIPT ANDA
-const scriptUrl = "https://script.google.com/macros/s/AKfycbw3h3zpkZQ0DSKePUSSIlnXssIxrTqAxyPPp3iFggcWxypxap32ykYnAnPRoHw0N3FW/exec";
+const scriptUrl = "https://script.google.com/macros/s/AKfycbwoNSBU2n01EyGK9bBWppqlpP2Gjwzk8JqEDJbyvxHDgPfXUpl6s-Cd8Q880hkVOJ5L/exec";
 
 // Variabel Global
 let rekapDataGlobal = [];
@@ -297,45 +297,148 @@ function renderLogTable() {
     const searchTerm = document.getElementById('log-search').value.toLowerCase();
     const limitVal = document.getElementById('log-limit').value;
 
-    // 1. Filter data berdasarkan pencarian
     let filtered = logDataGlobal.filter(log =>
         log.nama.toLowerCase().includes(searchTerm) ||
         log.jenis.toLowerCase().includes(searchTerm) ||
         log.keterangan.toLowerCase().includes(searchTerm)
     );
 
-    // 2. Terapkan Limit Baris (Default: 10)
-    if (limitVal !== 'all') {
-        filtered = filtered.slice(0, parseInt(limitVal));
-    }
+    if (limitVal !== 'all') filtered = filtered.slice(0, parseInt(limitVal));
 
     tbody.innerHTML = '';
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada histori aktivitas ditemukan</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tidak ada histori ditemukan</td></tr>`;
         return;
     }
 
-    // 3. Render ke Tabel
     filtered.forEach(log => {
         let badgeCls = log.jenis === 'Masuk' ? 'badge-in' : 'badge-out';
-
-        // --- LOGIKA BARU UNTUK LOG AKTIVITAS ---
-        let tampilKeterangan = '';
-        if (log.jenis === 'Masuk') {
-            tampilKeterangan = 'Uang Masuk';
-        } else {
-            tampilKeterangan = (log.keterangan && log.keterangan !== '-') ? log.keterangan : '';
-        }
-
         tbody.innerHTML += `
         <tr>
-            <td class="text-muted"><i class="fa-regular fa-calendar"></i> ${log.waktu}</td>
+            <td class="text-muted" style="font-size:0.8rem">${log.waktu}</td>
             <td><strong>${log.nama}</strong></td>
             <td><span class="history-badge ${badgeCls}">${log.jenis}</span></td>
             <td><strong>${formatRp(log.nominal)}</strong></td>
-            <td class="text-muted">${tampilKeterangan}</td>
+            <td class="text-muted">${log.keterangan}</td>
+            <td class="text-center">
+                <button class="btn-more-sm" onclick="modalEditTrx(${JSON.stringify(log).replace(/"/g, '&quot;')})"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-del" style="padding:4px 8px" onclick="hapusLogTrx(${log.rowIdx})"><i class="fa-solid fa-trash"></i></button>
+            </td>
         </tr>
     `;
+    });
+}
+
+// Fungsi Modal Edit Transaksi
+async function modalEditTrx(log) {
+    // Format nominal awal agar otomatis ada titiknya saat pop-up dibuka
+    let nominalAwal = log.nominal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    const { value: formValues } = await Swal.fire({
+        title: '<h3 style="color: #0f172a; margin-bottom: 0;"><i class="fa-solid fa-pen-to-square"></i> Edit Transaksi</h3>',
+        html: `
+            <div style="text-align: left; padding-top: 15px;">
+                <label style="font-size:0.85rem; font-weight:600; color:#64748b; margin-bottom:8px; display:block;">Nama Anak Binaan</label>
+                <div class="input-modern" style="background: #f1f5f9; cursor: not-allowed; border-color: #cbd5e1; margin-bottom: 18px;">
+                    <i class="fa-solid fa-lock icon-left" style="color: #94a3b8;"></i>
+                    <input id="swal-nama" type="text" value="${log.nama}" readonly disabled 
+                           style="width: 100%; padding: 14px 15px; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 500; color: #64748b; cursor: not-allowed;">
+                </div>
+
+                <label style="font-size:0.85rem; font-weight:600; color:#64748b; margin-bottom:8px; display:block;">Nominal Transaksi</label>
+                <div class="input-modern" style="margin-bottom: 18px;">
+                    <span class="currency-prefix">Rp</span>
+                    <input id="swal-nominal" type="text" value="${nominalAwal}" placeholder="Contoh: 50.000" 
+                           style="width: 100%; padding: 14px 15px; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 500;">
+                </div>
+
+                <label style="font-size:0.85rem; font-weight:600; color:#64748b; margin-bottom:8px; display:block;">Keterangan / Catatan</label>
+                <div class="input-modern">
+                    <i class="fa-solid fa-tag icon-left"></i>
+                    <input id="swal-ket" type="text" value="${log.keterangan}" 
+                           style="width: 100%; padding: 14px 15px; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 500;">
+                </div>
+            </div>
+        `,
+        focusConfirm: false, // Mematikan fokus otomatis pada tombol "Simpan"
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-save"></i> Simpan Perubahan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#ef4444',
+        width: '34em',
+        customClass: {
+            popup: 'form-glass'
+        },
+        didOpen: () => {
+            const inputNominalSwal = document.getElementById('swal-nominal');
+            
+            // --- LOGIKA BARU UNTUK AUTOFOCUS & KURSOR ---
+            // 1. Fokuskan ke input nominal
+            inputNominalSwal.focus();
+            
+            // 2. Hitung panjang karakter (termasuk titik) lalu taruh kursor di indeks terakhir
+            const valLength = inputNominalSwal.value.length;
+            inputNominalSwal.setSelectionRange(valLength, valLength);
+            // ---------------------------------------------
+
+            // Event listener agar form nominal langsung menambahkan titik otomatis saat diketik
+            inputNominalSwal.addEventListener('input', function () {
+                let rawValue = this.value.replace(/[^0-9]/g, '');
+                if (rawValue) {
+                    this.value = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                } else {
+                    this.value = '';
+                }
+            });
+        },
+        preConfirm: () => {
+            const nominalBaru = document.getElementById('swal-nominal').value.replace(/\./g, '');
+            if (!nominalBaru || parseInt(nominalBaru) <= 0) {
+                Swal.showValidationMessage('<i class="fa-solid fa-circle-exclamation"></i> Nominal harus lebih dari 0');
+                return false;
+            }
+            return {
+                rowIdx: log.rowIdx,
+                nama: document.getElementById('swal-nama').value,
+                nominal: nominalBaru,
+                keterangan: document.getElementById('swal-ket').value,
+                jenis: log.jenis
+            }
+        }
+    });
+
+    if (formValues) {
+        const payload = { action: 'editTransaksi', ...formValues };
+        await postDataWithAlert(payload, 'Transaksi berhasil diperbarui.');
+    }
+}
+
+// Fungsi Hapus Transaksi Tunggal
+async function hapusLogTrx(rowIdx) {
+    Swal.fire({
+        title: '<h3 style="color: #ef4444; margin: 0;"><i class="fa-solid fa-triangle-exclamation"></i> Hapus Transaksi?</h3>',
+        html: `
+            <div style="background: #fee2e2; border: 1px solid #f87171; border-radius: 12px; padding: 18px; margin-top: 15px; text-align: left; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);">
+                <p style="font-size: 0.95rem; color: #991b1b; margin: 0; line-height: 1.6;">
+                    Tindakan ini akan menghapus catatan transaksi secara permanen. <br>
+                    <strong>Saldo anak binaan akan otomatis dikalkulasi ulang!</strong>
+                </p>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="fa-solid fa-trash-can"></i> Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        width: '32em',
+        customClass: {
+            popup: 'form-glass'
+        }
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await postDataWithAlert({ action: 'hapusTransaksiLog', rowIdx: rowIdx }, 'Transaksi berhasil dihapus.');
+        }
     });
 }
 
