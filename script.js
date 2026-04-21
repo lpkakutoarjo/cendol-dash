@@ -636,5 +636,72 @@ async function hapusAnak(nama) {
     });
 }
 
-// Inisialisasi awal saat halaman dimuat
-document.addEventListener("DOMContentLoaded", fetchData);
+async function hashPIN(pin) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+const CORRECT_PIN_HASH = "cd4b0bba7f67328dcff29180fb217d06f0d3a43a95ed32d175797b60e3216f83";
+async function checkAccessPin() {
+    // Cek apakah user sudah login di sesi ini (hilang jika tab ditutup)
+    if (sessionStorage.getItem('cendol_authenticated') === 'true') {
+        fetchData(); 
+        return;
+    }
+
+    const { value: pin } = await Swal.fire({
+        title: '<h3 style="color: #0f172a; margin: 0;"><i class="fa-solid fa-lock"></i> Keamanan Dashboard</h3>',
+        html: '<p style="font-size:0.9rem; color:#64748b; margin-top:5px;">Silakan masukkan PIN akses untuk membuka CENDOL.</p>',
+        input: 'password',
+        inputPlaceholder: 'Masukkan 6 Digit PIN',
+        inputAttributes: {
+            maxlength: 6,
+            autocapitalize: 'off',
+            autocorrect: 'off',
+            style: 'text-align: center; font-size: 1.5rem; letter-spacing: 10px; border-radius: 12px;'
+        },
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        confirmButtonText: '<i class="fa-solid fa-key"></i> Buka Akses',
+        confirmButtonColor: '#3b82f6',
+        customClass: {
+            popup: 'form-glass'
+        },
+        preConfirm: async (enteredPin) => {
+            if (!enteredPin) {
+                Swal.showValidationMessage('<i class="fa-solid fa-circle-exclamation"></i> PIN tidak boleh kosong!');
+                return false;
+            }
+            
+            // Hash PIN yang diketik user dan bandingkan dengan Hash di sistem
+            const hashedPin = await hashPIN(enteredPin.trim());
+
+            
+            if (hashedPin !== CORRECT_PIN_HASH) {
+                Swal.showValidationMessage('<i class="fa-solid fa-triangle-exclamation"></i> PIN salah! Akses ditolak.');
+                return false;
+            }
+            return true;
+        }
+    });
+
+    // Jika PIN Benar
+    if (pin) {
+        sessionStorage.setItem('cendol_authenticated', 'true'); // Simpan sesi login
+        Swal.fire({
+            icon: 'success',
+            title: 'Akses Diberikan',
+            text: 'Selamat datang di Dashboard CENDOL',
+            timer: 1500,
+            showConfirmButton: false,
+            customClass: { popup: 'form-glass' }
+        });
+        fetchData(); // Jalankan pengambilan data dari Google Sheets
+    }
+}
+
+// Inisialisasi awal saat halaman dimuat (Verifikasi PIN terlebih dahulu)
+document.addEventListener("DOMContentLoaded", checkAccessPin);
