@@ -1,5 +1,5 @@
 // GANTI DENGAN URL DEPLOYMENT GOOGLE APPS SCRIPT ANDA
-const scriptUrl = "https://script.google.com/macros/s/AKfycbwoNSBU2n01EyGK9bBWppqlpP2Gjwzk8JqEDJbyvxHDgPfXUpl6s-Cd8Q880hkVOJ5L/exec";
+const scriptUrl = "https://script.google.com/macros/s/AKfycbyTPMyqcLY4vMOaajbYeZix0D_Nwzr2G8L_92kNZC4RA9Zg5oxdyssmZpZiiAhqQg__/exec";
 
 // Variabel Global
 let rekapDataGlobal = [];
