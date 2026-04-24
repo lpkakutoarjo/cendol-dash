@@ -420,3 +420,22 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
     border-color: var(--secondary);
     transform: translateY(-1px);
 }
+
+/* --- Penyesuaian Tombol Aksi Tabel Manajemen Anak --- */
+.action-container {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .action-container {
+        flex-direction: column; /* Menumpuk tombol ke bawah di layar HP */
+    }
+    .action-container button {
+        width: 100%; /* Tombol memenuhi lebar kolom di HP */
+        margin: 0 !important;
+        padding: 8px;
+    }
+}
