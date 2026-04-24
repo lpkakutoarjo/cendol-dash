@@ -1,5 +1,5 @@
 // GANTI DENGAN URL DEPLOYMENT GOOGLE APPS SCRIPT ANDA
-const scriptUrl = "https://script.google.com/macros/s/AKfycbyTPMyqcLY4vMOaajbYeZix0D_Nwzr2G8L_92kNZC4RA9Zg5oxdyssmZpZiiAhqQg__/exec";
+const scriptUrl = "https://script.google.com/macros/s/AKfycbyN_X60H1J0-Eall57fZH70k9OYsnMYb8YuPuYr3_eAqnhX8bBQFIy-9C9AUqn0xr3D/exec";
 
 // Variabel Global
 let rekapDataGlobal = [];
@@ -170,7 +170,14 @@ function renderAnakTable() {
                 <td>${index + 1}</td>
                 <td><strong>${anak.nama}</strong></td>
                 <td class="text-center">
-                    <button class="btn-del" onclick="hapusAnak('${anak.nama}')"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                    <div class="action-container">
+                        <button class="btn-more-sm" onclick="editAnak('${anak.nama}')">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button class="btn-del" onclick="hapusAnak('${anak.nama}')">
+                            <i class="fa-solid fa-trash-can"></i> Hapus
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -372,17 +379,13 @@ async function modalEditTrx(log) {
         },
         didOpen: () => {
             const inputNominalSwal = document.getElementById('swal-nominal');
+            const inputKetSwal = document.getElementById('swal-ket');
             
-            // --- LOGIKA BARU UNTUK AUTOFOCUS & KURSOR ---
-            // 1. Fokuskan ke input nominal
             inputNominalSwal.focus();
             
-            // 2. Hitung panjang karakter (termasuk titik) lalu taruh kursor di indeks terakhir
             const valLength = inputNominalSwal.value.length;
             inputNominalSwal.setSelectionRange(valLength, valLength);
-            // ---------------------------------------------
 
-            // Event listener agar form nominal langsung menambahkan titik otomatis saat diketik
             inputNominalSwal.addEventListener('input', function () {
                 let rawValue = this.value.replace(/[^0-9]/g, '');
                 if (rawValue) {
@@ -391,6 +394,16 @@ async function modalEditTrx(log) {
                     this.value = '';
                 }
             });
+
+            const triggerSubmitOnEnter = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    Swal.clickConfirm(); // Otomatis klik tombol "Simpan"
+                }
+            };
+
+            inputNominalSwal.addEventListener('keydown', triggerSubmitOnEnter);
+            inputKetSwal.addEventListener('keydown', triggerSubmitOnEnter);
         },
         preConfirm: () => {
             const nominalBaru = document.getElementById('swal-nominal').value.replace(/\./g, '');
@@ -634,6 +647,64 @@ async function hapusAnak(nama) {
             await postDataWithAlert({ action: 'hapusAnak', nama: nama }, 'Data dan riwayat berhasil dibersihkan.');
         }
     });
+}
+
+async function editAnak(namaLama) {
+    const { value: namaBaru } = await Swal.fire({
+        title: '<h3 style="color: #0f172a; margin-bottom: 0;"><i class="fa-solid fa-pen-to-square"></i> Edit Data Anak</h3>',
+        html: `
+            <div style="text-align: left; padding-top: 15px;">
+                <label style="font-size:0.85rem; font-weight:600; color:#64748b; margin-bottom:8px; display:block;">Nama Lengkap Baru</label>
+                <div class="input-modern" style="margin-bottom: 10px;">
+                    <i class="fa-solid fa-user-pen icon-left"></i>
+                    <input id="swal-nama-anak" type="text" value="${namaLama}" placeholder="Masukkan nama baru..." 
+                           style="width: 100%; padding: 14px 15px; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 500; color: var(--text-main);">
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fa-solid fa-save"></i> Simpan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#ef4444',
+        width: '32em',
+        customClass: { popup: 'form-glass' },
+        didOpen: () => {
+            const inputEl = document.getElementById('swal-nama-anak');
+            inputEl.focus();
+            const valLength = inputEl.value.length;
+            inputEl.setSelectionRange(valLength, valLength);
+
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Mencegah aksi default
+                    Swal.clickConfirm(); // Otomatis klik tombol "Simpan"
+                }
+            });
+        },
+        preConfirm: () => {
+            const inputVal = document.getElementById('swal-nama-anak').value.trim();
+            if (!inputVal) {
+                Swal.showValidationMessage('<i class="fa-solid fa-circle-exclamation"></i> Nama tidak boleh kosong!');
+                return false;
+            }
+            if (inputVal.toUpperCase() === namaLama.toUpperCase()) {
+                Swal.showValidationMessage('<i class="fa-solid fa-circle-exclamation"></i> Nama belum diubah!');
+                return false;
+            }
+            return inputVal;
+        }
+    });
+
+    if (namaBaru) {
+        const payload = { 
+            action: 'editAnak', 
+            namaLama: namaLama, 
+            namaBaru: namaBaru.toUpperCase() 
+        };
+        await postDataWithAlert(payload, 'Data anak dan riwayat transaksi berhasil diperbarui.');
+    }
 }
 
 async function hashPIN(pin) {
