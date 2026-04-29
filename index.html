@@ -19,11 +19,18 @@
             <h2>CENDOL Admin</h2>
             <p>LPKA Kelas I Kutoarjo</p>
         </div>
-        <ul class="nav-links">
+<ul class="nav-links">
             <li class="active" onclick="switchMenu('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard Utama</li>
             <li onclick="switchMenu('manajemen', this)"><i class="fa-solid fa-users-gear"></i> Manajemen Anak</li>
             <li onclick="switchMenu('log', this)"><i class="fa-solid fa-clock-rotate-left"></i> Log Aktivitas</li>
         </ul>
+        
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="btn-logout">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+            <p class="footer-credit">Created by Peserta MagangHub Kemnaker Batch 2</p>
+        </div>
     </div>
 
     <div class="main-content">
