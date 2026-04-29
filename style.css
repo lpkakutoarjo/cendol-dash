@@ -439,3 +439,35 @@ input:focus, select:focus { border-color: var(--secondary); background: white; b
         padding: 8px;
     }
 }
+
+/* --- Sidebar Footer & Logout --- */
+.btn-logout {
+    width: 100%;
+    padding: 10px;
+    background: #fee2e2;
+    color: var(--danger);
+    border: 1px solid #f87171;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.btn-logout:hover {
+    background: var(--danger);
+    color: white;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.footer-credit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.4;
+    font-weight: 500;
+}
