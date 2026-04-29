@@ -774,5 +774,37 @@ async function checkAccessPin() {
     }
 }
 
+// -------- FITUR LOGOUT --------
+function logout() {
+    Swal.fire({
+        title: '<h3 style="color: #ef4444; margin: 0;"><i class="fa-solid fa-right-from-bracket"></i> Konfirmasi Logout</h3>',
+        html: '<p style="font-size: 0.95rem; color: #64748b; margin-top: 5px;">Anda harus memasukkan PIN kembali untuk masuk ke dashboard.</p>',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Logout',
+        cancelButtonText: 'Batal',
+        customClass: {
+            popup: 'form-glass'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Hapus sesi login dari browser
+            sessionStorage.removeItem('cendol_authenticated'); 
+            
+            // Tampilkan pop up sukses sejenak lalu refresh halaman
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil Logout',
+                showConfirmButton: false,
+                timer: 1000,
+                customClass: { popup: 'form-glass' }
+            }).then(() => {
+                location.reload(); // Muat ulang halaman untuk memunculkan modal PIN kembali
+            });
+        }
+    });
+}
+
 // Inisialisasi awal saat halaman dimuat (Verifikasi PIN terlebih dahulu)
 document.addEventListener("DOMContentLoaded", checkAccessPin);
